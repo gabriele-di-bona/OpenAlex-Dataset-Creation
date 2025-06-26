@@ -245,11 +245,11 @@ This results in one CSV per topic containing all textual metadata for the releva
 
 ### Create institution table
 
-This notebook (`~/notebooks/5_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one or more CSV files in the folder `~/data/institutions/`.
+This notebook (`~/notebooks/5_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one CSV file in the folder `~/data/institutions/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/institutions/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
-After extraction, the corresponding section of `~/notebooks/aux_convert_csv2parquet.ipynb` can be used to convert the CSV files into a single `*.parquet` file stored in `~/data/institutions.parquet`.
+After extraction, the corresponding section of `~/notebooks/aux_convert_csv2parquet.ipynb` can be used to convert the CSV files into a single `*.parquet` file stored in `~/data/institutions/institutions.parquet`.
 
 #### Table structure
 
@@ -270,9 +270,65 @@ The institution table includes the following columns:
 
 The script processes all lines from the `institutions` dump and appends valid rows into a buffer. Buffers are written to disk every 1000 rows to avoid memory overload, and flushed completely at the end of the script.
 
+
+### Create source table
+
+This notebook (`~/notebooks/5_create_sources.ipynb`) extracts metadata about sources (journals, conferences, etc.) from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/sources/`.
+
+> ⚠️ **Important**: This notebook appends data. If the folder `~/data/sources/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
+
+After extraction, the corresponding section of `~/notebooks/aux_convert_csv2parquet.ipynb` can be used to convert the CSV files into a single `*.parquet` file stored in `~/data/sources/sources.parquet`.
+
+#### Table structure
+
+The source table includes the following columns:
+
+```
+['id', 'display_name', 'issn', 'type', 'publisher', 'host_organization', 'country_code', 'apc_usd', 'works_count', 'cited_by_count', 'is_oa']
+```
+
+* `id`: OpenAlex ID of the source (e.g., `S123456`).
+* `display_name`: Name of the source, with semicolons (`;`) replaced by periods (`.`).
+* `issn`: ISSN-L code identifying the journal or source.
+* `type`: Type of the source (e.g., `journal`, `repository`, etc.).
+* `publisher`: Name of the publisher.
+* `host_organization`: OpenAlex ID of the host institution (if any).
+* `country_code`: ISO 2-letter country code of the source (if available).
+* `apc_usd`: Article Processing Charges in USD, if known.
+* `works_count`: Number of works published by this source.
+* `cited_by_count`: Number of citations received.
+* `is_oa`: Whether the source is open access (first character of the boolean field).
+
+Rows with missing `country_code` are filled with an empty string. Data is parsed and flushed to disk every 1000 entries to reduce memory usage.
+
+### Create publisher table
+
+This notebook (`~/notebooks/5_3_create_publishers.ipynb`) extracts metadata about publishers from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/publishers/`.
+
+> ⚠️ **Important**: This notebook appends data. If the folder `~/data/publishers/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
+
+After extraction, the corresponding section of `~/notebooks/aux_convert_csv2parquet.ipynb` can be used to convert the CSV files into a single `*.parquet` file stored in `~/data/publishers/publishers.parquet`.
+
+#### Table structure
+
+The publisher table includes the following columns:
+
+```
+['id', 'display_name', 'parent_publisher', 'works_count', 'cited_by_count']
+```
+
+* `id`: OpenAlex ID of the publisher (e.g., `P123456`).
+* `display_name`: Name of the publisher, with semicolons (`;`) replaced by periods (`.`).
+* `parent_publisher`: ID of the parent publishing group, if available (empty string otherwise).
+* `works_count`: Total number of works published under this publisher.
+* `cited_by_count`: Total number of citations received by works from this publisher.
+
+The script skips lines that cannot be parsed and gracefully handles missing `parent_publisher` values. Data is flushed in batches of 1000 lines.
+
+
 ### Create funder table
 
-This notebook (`~/notebooks/6_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as CSV files in the folder `~/data/funders/`.
+This notebook (`~/notebooks/6_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as a CSV file in the folder `~/data/funders/`.
 
 > ⚠️ **Important**: If the destination folder `~/data/funders/` is not empty, execution will halt to avoid appending duplicate rows. Ensure the folder is clean before running the script.
 
@@ -296,7 +352,7 @@ Rows are buffered and flushed to disk every 1000 entries to optimize performance
 
 ### Create topics table
 
-This notebook (`~/notebooks/7_create_topics.ipynb`) extracts metadata about the topics assigned to works by OpenAlex and stores them as CSV files under `~/data/topics/`.
+This notebook (`~/notebooks/7_create_topics.ipynb`) extracts metadata about the topics assigned to works by OpenAlex and stores them as a CSV file under `~/data/topics/`.
 
 > ⚠️ **Important**: If the destination folder `~/data/topics/` already contains files, the script will stop to avoid appending duplicate rows. Make sure to empty the folder before running the notebook.
 
@@ -675,6 +731,8 @@ Note: Some folders contain both `.csv` and `.parquet` formats, contributing to t
 | 2.5M    | `funders/`                              | Contains both `funders.csv` (1.9M) and `.parquet`                          |
 | 6.0M    | `topics/`                               | Contains `topics.csv` (4.9M) and `topics.parquet`                          |
 | 14M     | `institutions/`                         | Includes `institutions.csv` (11M) and `.parquet`                           |
+| 36M     | `sources/`                              | Includes `sources.csv` (27M) and `.parquet`                                |
+| 1M      | `publishers/`                           | Includes `publishers.csv` (600K) and `.parquet`                            |
 | 1.2G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic                          |
 | 5.7G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic                                           |
 | 1.5G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                                             |
@@ -710,8 +768,10 @@ In total, the dataset created (running this repository in June 2025) contains th
 |---------------|---------------|
 | Works         | 210,864,615   |
 | Authors       | 103,480,180   |
+| Sources       | 260,798       |
 | Institutions  | 114,883       |
 | Funders       | 32,437        |
+| Publishers    | 10,737        |
 | Topics        | 4,516         |
 
 ### Topic Hierarchy
