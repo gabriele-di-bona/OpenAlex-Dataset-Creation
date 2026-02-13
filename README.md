@@ -51,9 +51,9 @@ Recent OpenAlex snapshots include both the new schema and a **legacy** schema. T
    * Can be easily converted to a `.py` script
    * Was used on the QMUL cluster and completed in under a day
 
-### Snapshot Size (Release 2026-01-15)
+### Snapshot Size (Release 2026-02-03)
 
-From the latest download on the cluster, the snapshot folder contains **~758G** of **new-schema data**. The download now skips `legacy-data/`, and the notebooks only use the new-schema `data/` tree. Below are the *new-schema* subfolder sizes:
+From the latest download on the cluster, the snapshot folder contains **~757G** of **new-schema data**. The download now skips `legacy-data/`, and the notebooks only use the new-schema `data/` tree. Below are the *new-schema* subfolder sizes (approximate and subject to small changes between releases):
 
 | Size | Subfolder      |
 | ---: | -------------- |
@@ -147,8 +147,8 @@ Once completed, the related section in `~/notebooks/aux_convert_csv2parquet.ipyn
 Each topic-specific table includes the following columns:
 
 ```
-['id', 'date', 'type', 'language', 'journal', 'doi', 'authors', 'topics', 'references', 
-'sdg', 'keywords', 'grants', 'primary_topic']
+['id', 'date', 'type', 'language', 'journal', 'doi', 'authors', 'topics', 'references',
+'sdg', 'keywords', 'awards', 'primary_topic', 'related_works']
 ```
 
 - **`id`**: A unique OpenAlex identifier (e.g., `W123456`) for the work.
@@ -167,9 +167,10 @@ Each topic-specific table includes the following columns:
   `sdg1_score1;sdg2_score2;...`.
 - **`keywords`**: Keywords with scores, formatted as  
   `keyword1_score1;keyword2_score2;...`.
-- **`grants`**: Funding information formatted as  
+- **`awards`**: Award information formatted as  
   `awardid_funderid;...`.
 - **`primary_topic`**: The main topic ID associated with the work.
+- **`related_works`**: A semicolon-separated list of OpenAlex work IDs related to the work.
 
 #### CSV generation logic
 
@@ -834,50 +835,46 @@ data/ai_database/
 
 ---
 
-## Final Data Size (Release 2026-01-15 – Processed)
+## Final Data Size (Release 2026-02-03 - Processed)
 
-This section reports the sizes of the main folders generated during processing of the Release 2026-01-15 OpenAlex snapshot.  
-Note: Some folders contain both `.csv` and `.parquet` formats, contributing to their combined size.
+This section reports the sizes of the main folders generated during processing of the Release 2026-02-03 OpenAlex snapshot.
+Note: only selected folders retain both `.csv` and `.parquet` formats.
 
 ### Folder Sizes
 
-| Size    | Folder                                  | Notes                                                                      |
-|--------:|-----------------------------------------|----------------------------------------------------------------------------|
-| 120G    | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic                                   |
-| 36G     | `works_by_topic_parquet/`               | All works per primary topic (parquet)                                      |
-| 17G     | `authors/`                              | Includes `authors.csv` and `.parquet`                                      |
-| 2.5M    | `funders/`                              | Contains both `funders.csv` and `.parquet`                                 |
-| 6.0M    | `topics/`                               | Contains `topics.csv` and `topics.parquet`                                 |
-| 19M     | `institutions/`                         | Includes `institutions.csv` and `.parquet`                                 |
-| 57M     | `sources/`                              | Includes `sources.csv` and `.parquet`                                      |
-| 873K    | `publishers/`                           | Includes `publishers.csv` and `.parquet`                                   |
-| 1.6G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic                          |
-| 2.8G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic                                           |
-| 1.8G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                                             |
-| 3.8G    | `works2topic_by_topic_parquet/`         | All topic assignments per work                                             |
-| 193G    | `works2text_by_topic_csv/`              | Raw `.csv` version of title + abstract info                                |
-| 69G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)                                  |
-| 18G     | `works2references_by_topic_parquet/`    | Exploded work-to-reference links (parquet)                                 |
-| 158G    | `works2citations_by_topic_csv/`         | Citations exploded and grouped by cited topic                              |
-| 21G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)                                   |
-| 5.6G    | `awards/`                               | Awards tables (CSV + `.parquet`)                                           |
+| Size    | Folder                                  | Notes                                              |
+|--------:|-----------------------------------------|----------------------------------------------------|
+| 757G    | `openalex-snapshot/`                    | Original JSON files (new-schema data)              |
+| 167G    | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic           |
+| 69G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)          |
+| 60G     | `works_by_topic_parquet2/`              | Alternate works parquet copy                       |
+| 51G     | `works_by_topic_parquet/`               | All works per primary topic (parquet)              |
+| 42G     | `author2work_by_topic_csv/`             | Raw author-to-work mapping (CSV)                   |
+| 21G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)           |
+| 18G     | `works2references_by_topic_parquet/`    | Exploded work-to-reference links (parquet)         |
+| 9.3G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic (parquet)         |
+| 4.4G    | `authors/`                              | Authors table (parquet)                            |
+| 3.8G    | `works2topic_by_topic_parquet/`         | All topic assignments per work                     |
+| 2.8G    | `ai_database/`                          | AI subfield outputs                                |
+| 2.0G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                     |
+| 1.6G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic  |
+| 1.4G    | `awards/`                               | Awards table (parquet)                             |
+| 24M     | `sources/`                              | Sources table (parquet)                            |
+| 4.7M    | `institutions/`                         | Institutions table (parquet)                       |
+| 1.2M    | `topics/`                               | Topics table (parquet)                             |
+| 641K    | `funders/`                              | Funders table (parquet)                            |
+| 257K    | `publishers/`                           | Publishers table (parquet)                         |
 
-
-After validating `.parquet` conversions, you may choose to delete the original `.csv` files to save space.
-
-After eliminating all `.csv` files, the overall size of the repository is about 130G.
-However, one could only create or retain fewer data, for example the `filtered_works_data_by_topic_parquet/` and other description files, saving plenty of disk space.
+After validating `.parquet` conversions, you may choose to delete the remaining large `.csv` folders (e.g., `works_by_topic_csv/`, `author2work_by_topic_csv/`) to save substantial space.
 
 ### Example: CSV vs. Parquet Sizes
 
-Several folders contain both `.csv` and `.parquet` versions:
+Only a few folders still keep both formats:
 
-| Folder         | CSV Size | Parquet Size |
-|----------------|----------|--------------|
-| `topics/`      | 4.9M     | 1.2M         |
-| `funders/`     | 1.9M     | 656K         |
-| `institutions/`| 11M      | 2.9M         |
-| `authors/`     | 14G      | 4.6G         |
+| Dataset                 | CSV Folder (Size)                 | Parquet Folder (Size)                 |
+|-------------------------|-----------------------------------|---------------------------------------|
+| `works_by_topic`        | `works_by_topic_csv/` (167G)      | `works_by_topic_parquet/` (51G)       |
+| `author2work_by_topic`  | `author2work_by_topic_csv/` (42G) | `author2work_by_topic_parquet/` (9.3G)|
 
 ### Dataset statistics
 In total, the dataset created (running this repository in June 2025) contains the following number of elements.

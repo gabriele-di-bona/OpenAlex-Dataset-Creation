@@ -25,7 +25,7 @@ The `data/` folder contains:
 
 | Path                                   | Description                                                  |
 |----------------------------------------|--------------------------------------------------------------|
-| `openalex-snapshot/`                   | Original JSON files from OpenAlex (~703G, new-schema `data/`) |
+| `openalex-snapshot/`                   | Original JSON files from OpenAlex (~757G, new-schema `data/`) |
 | `works_by_topic_csv/`                  | Raw CSV files, grouped by primary topic                      |
 | `works_by_topic_parquet/`              | Optimized `.parquet` version of the same                     |
 | `authors/`                             | Author tables (CSV + `.parquet`)                             |
