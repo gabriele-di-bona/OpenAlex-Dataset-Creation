@@ -1,6 +1,8 @@
 # `~/data/` — OpenAlex Processed Data Folder
 
-This folder stores all intermediate and final data tables created during the processing of the June 2025 OpenAlex snapshot.
+This folder stores all intermediate and final data tables created during the processing of the Release 2026-01-15 OpenAlex snapshot.
+
+**Schema note:** recent OpenAlex snapshots include both the new schema and a **legacy** schema. The download notebook now **skips legacy-data** and fetches only the new-schema `data/` tree. The notebooks in this repository use only the new schema going forward.
 
 > ⚠️ **Note:** All contents in this folder are ignored by Git (via `.gitignore`) to avoid uploading large datasets.  
 > This `README.md` is tracked to ensure the folder is preserved in version control.
@@ -15,7 +17,7 @@ The `data/` folder contains:
 - All intermediate `.csv` tables
 - The final `.parquet` versions of each processed table
 - Topic-split outputs (e.g., works, text, authors, citations)
-- Flat tables (e.g., funders, institutions, authors)
+- Flat tables (e.g., funders, awards, institutions, authors)
 
 ---
 
@@ -23,22 +25,24 @@ The `data/` folder contains:
 
 | Path                                   | Description                                                  |
 |----------------------------------------|--------------------------------------------------------------|
-| `openalex-snapshot/`                   | Original JSON files from OpenAlex (417 GB)                   |
+| `openalex-snapshot/`                   | Original JSON files from OpenAlex (~703G, new-schema `data/`) |
 | `works_by_topic_csv/`                  | Raw CSV files, grouped by primary topic                      |
 | `works_by_topic_parquet/`              | Optimized `.parquet` version of the same                     |
 | `authors/`                             | Author tables (CSV + `.parquet`)                             |
 | `institutions/`                        | Institution tables (CSV + `.parquet`)                        |
 | `funders/`                             | Funder tables (CSV + `.parquet`)                             |
+| `awards/`                              | Awards tables (CSV + `.parquet`)                             |
 | `topics/`                              | Topics metadata table (CSV + `.parquet`)                     |
 | `works2text_by_topic_csv/`             | Raw CSVs with work titles and abstracts                      |
 | `works2text_by_topic_parquet/`         | Compressed `.parquet` equivalents                            |
 | `works2references_by_topic_parquet/`   | Work-to-reference edges (parquet, exploded)                  |
 | `works2citations_by_topic_csv/`        | Work-to-citation tables by **cited** topic (CSV format)      |
-| `works2citations_by_topic_csv/`        | Work-to-citation tables by **cited** topic (parquet format)  |
+| `works2citations_by_topic_parquet/`    | Work-to-citation tables by **cited** topic (parquet format)  |
 | `works2year_by_topic_parquet/`         | Per-topic work counts per year                               |
 | `works2topic_by_topic_parquet/`        | Top-3 topic assignment per work                              |
 | `author2work_by_topic_parquet/`        | Author-to-work link table (by topic)                         |
 | `all_works2primary_topic_parquet/`     | Flat table mapping every work to its primary topic           |
+| `ai_database/`                         | AI subfield outputs (topics, keywords, filtered works)       |
 
 ---
 

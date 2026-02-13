@@ -1,5 +1,5 @@
 # OpenAlex Dataset Creation  
-*Last updated: June 2025*  
+*Last updated: February 2026*  
 *By **Gabriele Di Bona***
 
 ---
@@ -28,6 +28,9 @@ If you plan to download the snapshot in multiple versions or times:
 
 Download the OpenAlex snapshot into the folder `~/data/openalex-snapshot/`. There are two main options:
 
+**Schema note (legacy vs new data)**  
+Recent OpenAlex snapshots include both the new schema and a **legacy** schema. The download notebook now **skips legacy-data** and fetches only the new-schema `data/` tree. The notebooks use only the new schema going forward.
+
 1. **Via AWS CLI (official method)**  
    Follow [OpenAlex’s documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) and run:
    ```
@@ -48,24 +51,23 @@ Download the OpenAlex snapshot into the folder `~/data/openalex-snapshot/`. Ther
    * Can be easily converted to a `.py` script
    * Was used on the QMUL cluster and completed in under a day
 
-### Snapshot Size (June 2025 Release)
+### Snapshot Size (Release 2026-01-15)
 
-The full snapshot is approximately **417 GB**. Below are the subfolder sizes:
+From the latest download on the cluster, the snapshot folder contains **~758G** of **new-schema data**. The download now skips `legacy-data/`, and the notebooks only use the new-schema `data/` tree. Below are the *new-schema* subfolder sizes:
 
 | Size | Subfolder      |
 | ---: | -------------- |
 | 1.5K | `domains`      |
 |  10K | `fields`       |
 | 143K | `subfields`    |
-| 3.5M | `publishers`   |
+| 1.9M | `publishers`   |
 | 4.9M | `topics`       |
-|  14M | `funders`      |
-|  89M | `concepts`     |
-| 133M | `merged_ids`   |
-| 182M | `institutions` |
-| 335M | `sources`      |
-|  57G | `authors`      |
-| 359G | `works`        |
+| 7.7M | `funders`      |
+| 6.1M | `concepts`     |
+| 165M | `institutions` |
+| 126M | `sources`      |
+|  60G | `authors`      |
+| 699G | `works`        |
 
 ---
 
@@ -98,7 +100,7 @@ After downloading the snapshot:
 1. Run the numbered notebooks in `~/notebooks/`:
 
    ```
-   ~/notebooks/X_create_SOMETHING.ipynb
+   ~/notebooks/X[_Y]_create_SOMETHING.ipynb
    ```
 
 2. Intermediate data is first saved as `*.csv` files
@@ -116,7 +118,7 @@ After downloading the snapshot:
 ## Notes
 
 * Compressed `parquet` files use **Brotli** to reduce size and support fast reads and filtered loading.
-* After notebooks `02` to `07` are completed, the original snapshot folder can also be deleted.
+* After notebooks `02` to `07` (including the `6_2` awards step) are completed, the original snapshot folder can also be deleted.
 * Notebooks `02` to `07` can be run at the same time or one after another, they do not interfere with each other, while the following ones require the previous notebooks to be run and the `.csv` files to be transformed into `.parquet` files.
 * The notebooks that require more times are those that go through every work folder in the snapshot (time between half and one day with one core, e.g. `~/notebooks/2_create_topic_works.ipynb`), and those generating reference and citation tables. Since the reference table process should take around 3 days on a single core, this has been parallelized with a script.
 * Some files contain a lot of information, so the RAM can be used quite intensively. The most RAM consuming process is transforming the authors table from `.csv` to `.parquet`, reaching a maximum of about 80G of RAM used.
@@ -201,6 +203,8 @@ Each row has the following columns:
 - `works_count_by_year`: Yearly work counts, formatted as `3_2018;5_2019`
 - `cited_by_count_by_year`: Yearly citation counts, formatted as `10_2018;12_2019`
 
+**Schema change:** in the new snapshot, `cited_by_count` is a **top-level** key on the author object (legacy data stored it under `summary_stats`). The `orcid` key may also be missing entirely; missing or null values are saved as empty strings.
+
 #### Extraction logic
 
 Each author record is parsed and saved if valid:
@@ -245,7 +249,7 @@ This results in one CSV per topic containing all textual metadata for the releva
 
 ### Create institution table
 
-This notebook (`~/notebooks/5_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one CSV file in the folder `~/data/institutions/`.
+This notebook (`~/notebooks/5_1_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one CSV file in the folder `~/data/institutions/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/institutions/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
@@ -268,12 +272,14 @@ The institution table includes the following columns:
 - `coord`: A string combining latitude and longitude as `latitude_longitude`. If unavailable, left empty.
 - `works_count`: Number of works affiliated with this institution.
 
+**Schema change:** in the new snapshot, `works_count` is a **top-level** key on the institution object (legacy data stored it under `summary_stats`).
+
 The script processes all lines from the `institutions` dump and appends valid rows into a buffer. Buffers are written to disk every 1000 rows to avoid memory overload, and flushed completely at the end of the script.
 
 
 ### Create source table
 
-This notebook (`~/notebooks/5_create_sources.ipynb`) extracts metadata about sources (journals, conferences, etc.) from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/sources/`.
+This notebook (`~/notebooks/5_2_create_sources.ipynb`) extracts metadata about sources (journals, conferences, etc.) from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/sources/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/sources/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
@@ -284,22 +290,33 @@ After extraction, the corresponding section of `~/notebooks/aux_convert_csv2parq
 The source table includes the following columns:
 
 ```
-['id', 'display_name', 'issn', 'type', 'publisher', 'host_organization', 'country_code', 'apc_usd', 'works_count', 'cited_by_count', 'is_oa']
+['id', 'display_name', 'issn', 'type', 'host_organization', 'host_organization_name',
+ 'country_code', 'apc_usd', 'works_count', 'cited_by_count',
+ 'h_index', 'i10_index', '2yr_h_index', '2yr_i10_index', '2yr_mean_citedness',
+ 'is_oa', 'is_in_doaj', 'is_core', 'is_indexed_in_scopus']
 ```
 
 * `id`: OpenAlex ID of the source (e.g., `S123456`).
 * `display_name`: Name of the source, with semicolons (`;`) replaced by periods (`.`).
 * `issn`: ISSN-L code identifying the journal or source.
 * `type`: Type of the source (e.g., `journal`, `repository`, etc.).
-* `publisher`: Name of the publisher.
-* `host_organization`: OpenAlex ID of the host institution (if any).
+* `host_organization`: OpenAlex ID of the host organization (if any).
+* `host_organization_name`: Name of the host organization (new schema; legacy data used `publisher` instead).
 * `country_code`: ISO 2-letter country code of the source (if available).
 * `apc_usd`: Article Processing Charges in USD, if known.
 * `works_count`: Number of works published by this source.
 * `cited_by_count`: Number of citations received.
+* `h_index`: Source h-index (summary stats).
+* `i10_index`: Source i10-index (summary stats).
+* `2yr_h_index`: Two-year h-index (may be missing in the new schema).
+* `2yr_i10_index`: Two-year i10-index (may be missing in the new schema).
+* `2yr_mean_citedness`: Two-year mean citedness (may be missing in the new schema).
 * `is_oa`: Whether the source is open access (first character of the boolean field).
+* `is_in_doaj`: Whether the source is in DOAJ (first character of the boolean field).
+* `is_core`: Whether the source is in CORE (first character of the boolean field; may be missing).
+* `is_indexed_in_scopus`: Whether the source is indexed in Scopus (first character of the boolean field; may be missing).
 
-Rows with missing `country_code` are filled with an empty string. Data is parsed and flushed to disk every 1000 entries to reduce memory usage.
+Rows with missing `country_code` or missing 2-year summary stats are filled with empty strings. Data is parsed and flushed to disk every 1000 entries to reduce memory usage.
 
 ### Create publisher table
 
@@ -318,8 +335,8 @@ The publisher table includes the following columns:
 ```
 
 * `id`: OpenAlex ID of the publisher (e.g., `P123456`).
-* `display_name`: Name of the publisher, with semicolons (`;`) replaced by periods (`.`).
-* `parent_publisher`: ID of the parent publishing group, if available (empty string otherwise).
+* `display_name`: Name of the publisher, with semicolons (`;`) replaced by periods (`.`). In the new schema this can be missing and is saved as empty.
+* `parent_publisher`: ID of the parent publishing group, if available (empty string otherwise). The key itself can be missing in the new schema.
 * `works_count`: Total number of works published under this publisher.
 * `cited_by_count`: Total number of citations received by works from this publisher.
 
@@ -328,7 +345,7 @@ The script skips lines that cannot be parsed and gracefully handles missing `par
 
 ### Create funder table
 
-This notebook (`~/notebooks/6_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as a CSV file in the folder `~/data/funders/`.
+This notebook (`~/notebooks/6_1_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as a CSV file in the folder `~/data/funders/`.
 
 > ⚠️ **Important**: If the destination folder `~/data/funders/` is not empty, execution will halt to avoid appending duplicate rows. Ensure the folder is clean before running the script.
 
@@ -345,10 +362,38 @@ Each row in the funders table corresponds to a funder entry and includes the fol
 - `id`: OpenAlex funder ID (e.g., `F123456`).
 - `display_name`: Name of the funder (with semicolons replaced by periods).
 - `country_code`: ISO 2-letter code of the country (e.g., `US`, `GB`).
-- `grants_count`: Number of grants recorded for this funder.
+- `grants_count`: Number of grants recorded for this funder (may be missing in the new schema).
 - `works_count`: Number of works that acknowledge this funder.
 
 Rows are buffered and flushed to disk every 1000 entries to optimize performance. The buffer is fully flushed again at the end of the script.
+
+### Create awards table
+
+This notebook (`~/notebooks/6_2_create_awards.ipynb`) extracts award-level metadata from the OpenAlex awards dump and stores it as a flat table in `~/data/awards/`.
+
+> âš ï¸ **Important**: If the destination folder `~/data/awards/` is not empty, execution will halt to avoid appending duplicate rows. Ensure the folder is clean before running the script.
+
+After running this notebook, use the relevant section in `~/notebooks/aux_convert_csv2parquet.ipynb` to convert the output CSV files into a single `awards.parquet` file in the same folder. The CSV files can then be safely deleted.
+
+#### Table structure
+
+Each row in the awards table corresponds to a single award and includes the following fields:
+
+```
+['id', 'display_name', 'description', 'funder_id', 'funding_type',
+ 'funded_outputs_count', 'funded_outputs', 'start_date', 'end_date', 'doi']
+```
+
+- `id`: OpenAlex award ID (e.g., `AW123456`).
+- `display_name`: Award title (if available).
+- `description`: Award description (if available).
+- `funder_id`: OpenAlex funder ID associated with the award.
+- `funding_type`: Funding type label from OpenAlex.
+- `funded_outputs_count`: Number of funded outputs.
+- `funded_outputs`: Semicolon-separated list of funded work IDs (may be empty).
+- `start_date`: Award start date (if available).
+- `end_date`: Award end date (if available).
+- `doi`: Award DOI (if available).
 
 ### Create topics table
 
@@ -501,26 +546,26 @@ Each file is a `.parquet` file per topic and is compressed using **Brotli**.
 
 The following columns are extracted:
 
-- `author_id`: Cleaned author identifier
+- `author_id`: Author identifier (may be empty if missing in the source string)
 - `work_id`: Corresponding work ID
 - `date`: Date of publication
-- `primary_affiliation`: First listed institution for this author-work pair
+- `affiliations`: Institution block as stored in the authors string (e.g., `I123|I456`)
 - `is_corresponding`: Boolean flag (True if this author is marked as corresponding)
 
 Example row:
 ```
-author_id     | work_id       | date       | primary_affiliation | is_corresponding
-A1234567890   | W4410793892   | 2025-05-28 | I998877             | True
+author_id     | work_id       | date       | affiliations     | is_corresponding
+A1234567890   | W4410793892   | 2025-05-28 | I998877|I1122   | True
 ```
 
 #### Extraction logic
 
 The `authors` column of each work is exploded. Each element in the form  
-`author_id_affiliations_correspondingFlag` is parsed into:
+`author_id_affiliations_correspondingFlag` is parsed from the **right**:
 
-- `author_id`: before first `_`
-- `primary_affiliation`: first item of the institution block (split by `|`)
-- `is_corresponding`: `T` if present as the third part; `F` otherwise
+- `is_corresponding`: last `_`-separated part (`T` or `F`)
+- `affiliations`: second-to-last part (institution block, `|`-separated)
+- `author_id`: everything before those two parts (preserves underscores in IDs; empty if missing)
 
 The logic supports two modes:
 
@@ -632,7 +677,11 @@ The SLURM/SGE job array is defined in:
 bash_scripts/gen_work2references.sh
 ```
 
-This uses a job range from `1` to `4516` with `1 core`, `40GB RAM`, and `1 hour` per task, as it required 34GB of RAM during execution
+This uses a job range from `1` to `4516` with `1 core`, `100GB RAM`, and `1 hour` per task. In the current setup, each task uses about **80GB RAM** and typically finishes in **2–4 minutes**.
+
+**Memory note:** Generating a single topic’s references can currently require **~80GB RAM** depending on the topic size.
+If memory is a constraint, the `python_scripts/12_gen_work2references.py` script should be revised to use a buffered,
+streaming approach. This is not implemented yet.
 
 
 ### Generate Work–Citations CSVs (by Cited Topic)
@@ -664,7 +713,7 @@ Similarly to the work-reference table, each row in the CSVs contains:
 - Input files:  
   Topic-split `.parquet` files from `data/works2references_by_topic_parquet/`
 
-- For each reference, the citing record is **reversed** and buffered under the referenced topic.
+- For each reference row, the citing record is **reversed** and buffered under the referenced topic.
 
 - Buffers are flushed to CSV when they reach `BUFFER_SIZE = 5000`.
 
@@ -673,6 +722,14 @@ Similarly to the work-reference table, each row in the CSVs contains:
 - Before execution, the script **aborts** if any file is already present in the output folder to avoid duplicate appends.
 
 - This approach avoids a full in-memory dataframe by writing directly to CSV buffers, making it suitable for large-scale data.
+
+#### Running 12 and 13 in parallel
+
+You can now run the references pipeline and the citations pipeline **at the same time**. As soon as a single topic’s
+`works2references` parquet file is ready (usually produced by the `python_scripts/12_gen_work2references.py` job array),
+`13_gen_work2citations.ipynb` can consume it and append reversed rows to the appropriate cited-topic CSVs. This removes
+the need to wait for **all** topics to finish in step 12 before starting step 13, and enables streaming the citation
+generation topic-by-topic as references complete.
 
 Here's the Markdown documentation block for `~/notebooks/14_gen_filtered_work_data.ipynb` in the style you requested, fully copy-paste ready:
 
@@ -716,33 +773,60 @@ Each row in the output parquet files contains:
 
 ---
 
-## Final Data Size (June 2025 Release – Processed)
+### Build AI Subfield Dataset
+This notebook (`~/notebooks/15_build_ai_database_and_simplicial_complex.ipynb`) filters the dataset to retain only papers within the **Artificial Intelligence** subfield (based on the OpenAlex topics table).
 
-This section reports the sizes of the main folders generated during processing of the June 2025 OpenAlex snapshot.  
+The output is stored in:
+
+```
+data/ai_database/
+```
+
+#### Output highlights
+
+- `ai_topics.csv`: all OpenAlex topics in the AI subfield
+- `ai_topic_keywords_OA.csv`: exploded AI topic keywords
+- `ai_works.parquet`: filtered AI works table with broad/strict AI flags
+
+#### Core filters (current defaults)
+
+- Publication year >= 1950
+- Language = `en`
+- Type in `{article, book-chapter, review, report, book, dissertation, dataset, preprint}`
+- Non-empty DOI and title
+- **AI broad**: any topic in the AI subfield
+- **AI strict**: primary topic in the AI subfield
+
+
+---
+
+## Final Data Size (Release 2026-01-15 – Processed)
+
+This section reports the sizes of the main folders generated during processing of the Release 2026-01-15 OpenAlex snapshot.  
 Note: Some folders contain both `.csv` and `.parquet` formats, contributing to their combined size.
 
 ### Folder Sizes
 
 | Size    | Folder                                  | Notes                                                                      |
 |--------:|-----------------------------------------|----------------------------------------------------------------------------|
-| 72G     | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic                                   |
-| 23G     | `works_by_topic_parquet/`               | All works per primary topic (parquet)                                      |
-| 19G     | `authors/`                              | Includes `authors.csv` (14G) and `.parquet`                                |
-| 2.5M    | `funders/`                              | Contains both `funders.csv` (1.9M) and `.parquet`                          |
-| 6.0M    | `topics/`                               | Contains `topics.csv` (4.9M) and `topics.parquet`                          |
-| 14M     | `institutions/`                         | Includes `institutions.csv` (11M) and `.parquet`                           |
-| 36M     | `sources/`                              | Includes `sources.csv` (27M) and `.parquet`                                |
-| 1M      | `publishers/`                           | Includes `publishers.csv` (600K) and `.parquet`                            |
-| 1.2G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic                          |
-| 5.7G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic                                           |
-| 1.5G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                                             |
-| 2.7G    | `works2topic_by_topic_parquet/`         | All topic assignments per work                                             |
-| 143G    | `works2text_by_topic_csv/`              | Raw `.csv` version of title + abstract info                                |
-| 50G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)                                  |
+| 120G    | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic                                   |
+| 36G     | `works_by_topic_parquet/`               | All works per primary topic (parquet)                                      |
+| 17G     | `authors/`                              | Includes `authors.csv` and `.parquet`                                      |
+| 2.5M    | `funders/`                              | Contains both `funders.csv` and `.parquet`                                 |
+| 6.0M    | `topics/`                               | Contains `topics.csv` and `topics.parquet`                                 |
+| 19M     | `institutions/`                         | Includes `institutions.csv` and `.parquet`                                 |
+| 57M     | `sources/`                              | Includes `sources.csv` and `.parquet`                                      |
+| 873K    | `publishers/`                           | Includes `publishers.csv` and `.parquet`                                   |
+| 1.6G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic                          |
+| 2.8G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic                                           |
+| 1.8G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                                             |
+| 3.8G    | `works2topic_by_topic_parquet/`         | All topic assignments per work                                             |
+| 193G    | `works2text_by_topic_csv/`              | Raw `.csv` version of title + abstract info                                |
+| 69G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)                                  |
 | 18G     | `works2references_by_topic_parquet/`    | Exploded work-to-reference links (parquet)                                 |
-| 143G    | `works2citations_by_topic_csv/`         | Citations exploded and grouped by cited topic                              |
-| 20G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)                                   |
-| 3.7G    | `filtered_works_data_by_topic_parquet/` | Filtered works with valid topics and authors (by topic, parquet)           |
+| 158G    | `works2citations_by_topic_csv/`         | Citations exploded and grouped by cited topic                              |
+| 21G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)                                   |
+| 5.6G    | `awards/`                               | Awards tables (CSV + `.parquet`)                                           |
 
 
 After validating `.parquet` conversions, you may choose to delete the original `.csv` files to save space.
