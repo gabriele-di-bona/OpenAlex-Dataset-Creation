@@ -731,6 +731,40 @@ You can now run the references pipeline and the citations pipeline **at the same
 the need to wait for **all** topics to finish in step 12 before starting step 13, and enables streaming the citation
 generation topic-by-topic as references complete.
 
+### Generate Work-Related Table
+This script (`python_scripts/12_1_gen_work2related.py`) expands the `related_works` field from the topic-split works tables and enriches each edge with metadata for the related paper.
+
+The output is stored in:
+
+```
+data/works2related_by_topic_parquet/
+```
+
+Each file is a `.parquet` file per topic and contains:
+
+- `work_id`: ID of the source work
+- `publication_date`: Date of the source work
+- `primary_topic`: Primary topic of the source work
+- `related_work_id`: ID of the related work
+- `related_publication_date`: Date of the related work
+- `related_primary_topic`: Primary topic of the related work
+
+#### Parallel execution on cluster
+
+A job array is available in:
+
+```
+bash_scripts/gen_work2related.sh
+```
+
+Each task runs:
+
+```
+python 12_1_gen_work2related.py -ID <topic_index>
+```
+
+where `<topic_index>` is **1-based** and maps to the topic list derived from the `works_by_topic_parquet` folder.
+
 Here's the Markdown documentation block for `~/notebooks/14_gen_filtered_work_data.ipynb` in the style you requested, fully copy-paste ready:
 
 ### Filter and Merge Work–Topic–Author Data

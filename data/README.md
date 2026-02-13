@@ -38,6 +38,7 @@ The `data/` folder contains:
 | `works2references_by_topic_parquet/`   | Work-to-reference edges (parquet, exploded)                  |
 | `works2citations_by_topic_csv/`        | Work-to-citation tables by **cited** topic (CSV format)      |
 | `works2citations_by_topic_parquet/`    | Work-to-citation tables by **cited** topic (parquet format)  |
+| `works2related_by_topic_parquet/`      | Work-to-related edges (parquet, exploded)                    |
 | `works2year_by_topic_parquet/`         | Per-topic work counts per year                               |
 | `works2topic_by_topic_parquet/`        | Top-3 topic assignment per work                              |
 | `author2work_by_topic_parquet/`        | Author-to-work link table (by topic)                         |
