@@ -6,4 +6,6 @@ data/*
 *_old*
 old.*
 old_*
+*tmp*
+*TMP*
 bash_scripts/outputs*
