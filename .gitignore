@@ -3,3 +3,7 @@ data/*
 !data/README.md
 *.ipynb_checkpoints*
 *__pycache__*
+*_old*
+old.*
+old_*
+bash_scripts/outputs*
