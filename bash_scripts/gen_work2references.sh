@@ -1,9 +1,9 @@
 #!/bin/bash
 #$ -cwd
-#$ -t 66-4516
+#$ -t 1-4516
 #$ -j y
 #$ -pe smp 1 
-#$ -l h_vmem=40G
+#$ -l h_vmem=100G
 # #$ -l highmem
 #$ -l h_rt=1:0:0
 #$ -l rocky
