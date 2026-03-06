@@ -147,16 +147,18 @@ Once completed, the related section in `~/notebooks/aux_convert_csv2parquet.ipyn
 Each topic-specific table includes the following columns:
 
 ```
-['id', 'date', 'type', 'language', 'journal', 'doi', 'authors', 'topics', 'references',
+['id', 'doi', 'mag', 'pmid', 'date', 'type', 'language', 'journal', 'authors', 'topics', 'references',
 'sdg', 'keywords', 'awards', 'primary_topic', 'related_works']
 ```
 
 - **`id`**: A unique OpenAlex identifier (e.g., `W123456`) for the work.
+- **`doi`**: The work DOI without the `https://doi.org/` prefix.
+- **`mag`**: Microsoft Academic Graph identifier from `ids.mag` (if available).
+- **`pmid`**: PubMed identifier extracted from `ids.pmid` (if available).
 - **`date`**: The publication date of the work.
 - **`type`**: The type of publication (e.g., `article`, `preprint`, `review`, etc.).
 - **`language`**: ISO 2-letter language code (e.g., `en`).
 - **`journal`**: The OpenAlex ID of the journal (if available), or an empty string.
-- **`doi`**: The work’s DOI without the `https://doi.org/` prefix.
 - **`authors`**: A compact string representation of all authors in the format  
   `author1_institutionA|institutionB_F;author2_institutionC_T;...`,  
   where `T`/`F` indicates corresponding author status.
