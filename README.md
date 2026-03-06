@@ -41,7 +41,7 @@ Recent OpenAlex snapshots include both the new schema and a **legacy** schema. T
    Run the notebook:
 
    ```
-   ~/notebooks/1_download_snapshot.ipynb
+   ~/notebooks/01_download_snapshot.ipynb
    ```
 
    This script:
@@ -118,9 +118,9 @@ After downloading the snapshot:
 ## Notes
 
 * Compressed `parquet` files use **Brotli** to reduce size and support fast reads and filtered loading.
-* After notebooks `02` to `07` (including the `6_2` awards step) are completed, the original snapshot folder can also be deleted.
+* After notebooks `02` to `07` (including the `06_2` awards step) are completed, the original snapshot folder can also be deleted.
 * Notebooks `02` to `07` can be run at the same time or one after another, they do not interfere with each other, while the following ones require the previous notebooks to be run and the `.csv` files to be transformed into `.parquet` files.
-* The notebooks that require more times are those that go through every work folder in the snapshot (time between half and one day with one core, e.g. `~/notebooks/2_create_topic_works.ipynb`), and those generating reference and citation tables. Since the reference table process should take around 3 days on a single core, this has been parallelized with a script.
+* The notebooks that require more times are those that go through every work folder in the snapshot (time between half and one day with one core, e.g. `~/notebooks/02_create_topic_works.ipynb`), and those generating reference and citation tables. Since the reference table process should take around 3 days on a single core, this has been parallelized with a script.
 * Some files contain a lot of information, so the RAM can be used quite intensively. The most RAM consuming process is transforming the authors table from `.csv` to `.parquet`, reaching a maximum of about 80G of RAM used.
 * If RAM or hard disk is a problem, the authors table can be split, either in multiple files keeping all columns, or removing some columns, for example removing `works_count_by_year` and `cited_by_count_by_year`. Similarly, for the text of each work, it could be reduced by either removing the abstract column or putting it into a different file. Nevertheless, if all these files can be created and stored with success, since they are `.parquet` files, they can be read with a smaller amount of memory by pre-selecting to load only certain columns and/or rows, significantly helping in the usage of these files
 * For citation networks purposes, notice that every citation is saved twice, once as a reference in `~/data/works2references_by_topic_parquet/` and once as a citation in `~/data/works2citations_by_topic_parquet/`. In particular, if one wants to get all references and citations from and to a certain topic, one should be careful to remove duplicates, especially for those within the same topic, as the same (but reversed) should appear in both the topic reference table and citation table.
@@ -134,7 +134,7 @@ After downloading the snapshot:
 
 The first step is to go over all works in the OpenAlex snapshot and extract the relevant information. After parsing the primary topic of each work, a row is appended to the corresponding file in `~/data/works_by_topic_csv/`, based on that primary topic.
 
-This processing is handled in `~/notebooks/2_create_topic_works.ipynb`. 
+This processing is handled in `~/notebooks/02_create_topic_works.ipynb`. 
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/works_by_topic_csv/` is not empty, execution will stop to avoid appending duplicate data. Make sure the folder is empty before running.
 
@@ -180,7 +180,7 @@ For each JSON line in the gzipped OpenAlex dump, a `row` is built if the work co
 
 ### Create author table
 
-This notebook (`~/notebooks/3_create_authors.ipynb`) processes the OpenAlex author dump and builds a comprehensive author table, saved by chunks into `~/data/authors/` in CSV format.
+This notebook (`~/notebooks/03_create_authors.ipynb`) processes the OpenAlex author dump and builds a comprehensive author table, saved by chunks into `~/data/authors/` in CSV format.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/authors/` is not empty, execution will stop to avoid duplication. Make sure to empty the folder before running.
 
@@ -219,7 +219,7 @@ Each author record is parsed and saved if valid:
 
 ### Create work-to-text table by topic
 
-This notebook (`~/notebooks/4_create_works2text.ipynb`) extracts the `title` and `abstract` fields from the OpenAlex works, grouped by their primary topic. The output is saved into topic-specific CSV files under `~/data/works2text_by_topic_csv/`.
+This notebook (`~/notebooks/04_create_work2text.ipynb`) extracts the `title` and `abstract` fields from the OpenAlex works, grouped by their primary topic. The output is saved into topic-specific CSV files under `~/data/works2text_by_topic_csv/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/works2text_by_topic_csv/` is not empty, execution will stop to avoid appending duplicate data. Make sure the folder is empty before running.
 
@@ -252,7 +252,7 @@ This results in one CSV per topic containing all textual metadata for the releva
 
 ### Create institution table
 
-This notebook (`~/notebooks/5_1_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one CSV file in the folder `~/data/institutions/`.
+This notebook (`~/notebooks/05_1_create_institutions.ipynb`) extracts metadata about institutions from the OpenAlex snapshot. The data is stored in a single flat table saved as one CSV file in the folder `~/data/institutions/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/institutions/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
@@ -282,7 +282,7 @@ The script processes all lines from the `institutions` dump and appends valid ro
 
 ### Create source table
 
-This notebook (`~/notebooks/5_2_create_sources.ipynb`) extracts metadata about sources (journals, conferences, etc.) from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/sources/`.
+This notebook (`~/notebooks/05_2_create_sources.ipynb`) extracts metadata about sources (journals, conferences, etc.) from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/sources/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/sources/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
@@ -323,7 +323,7 @@ Rows with missing `country_code` or missing 2-year summary stats are filled with
 
 ### Create publisher table
 
-This notebook (`~/notebooks/5_3_create_publishers.ipynb`) extracts metadata about publishers from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/publishers/`.
+This notebook (`~/notebooks/05_3_create_publishers.ipynb`) extracts metadata about publishers from the OpenAlex snapshot. The data is stored in one CSV file saved in the folder `~/data/publishers/`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/publishers/` is not empty, execution will stop to avoid appending duplicate data. Ensure the folder is empty before running this script.
 
@@ -348,7 +348,7 @@ The script skips lines that cannot be parsed and gracefully handles missing `par
 
 ### Create funder table
 
-This notebook (`~/notebooks/6_1_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as a CSV file in the folder `~/data/funders/`.
+This notebook (`~/notebooks/06_1_create_funders.ipynb`) extracts metadata about funding organizations from the OpenAlex snapshot and stores them in a flat table saved as a CSV file in the folder `~/data/funders/`.
 
 > ⚠️ **Important**: If the destination folder `~/data/funders/` is not empty, execution will halt to avoid appending duplicate rows. Ensure the folder is clean before running the script.
 
@@ -372,7 +372,7 @@ Rows are buffered and flushed to disk every 1000 entries to optimize performance
 
 ### Create awards table
 
-This notebook (`~/notebooks/6_2_create_awards.ipynb`) extracts award-level metadata from the OpenAlex awards dump and stores it as a flat table in `~/data/awards/`.
+This notebook (`~/notebooks/06_2_create_awards.ipynb`) extracts award-level metadata from the OpenAlex awards dump and stores it as a flat table in `~/data/awards/`.
 
 > âš ï¸ **Important**: If the destination folder `~/data/awards/` is not empty, execution will halt to avoid appending duplicate rows. Ensure the folder is clean before running the script.
 
@@ -400,7 +400,7 @@ Each row in the awards table corresponds to a single award and includes the foll
 
 ### Create topics table
 
-This notebook (`~/notebooks/7_create_topics.ipynb`) extracts metadata about the topics assigned to works by OpenAlex and stores them as a CSV file under `~/data/topics/`.
+This notebook (`~/notebooks/07_create_topics.ipynb`) extracts metadata about the topics assigned to works by OpenAlex and stores them as a CSV file under `~/data/topics/`.
 
 > ⚠️ **Important**: If the destination folder `~/data/topics/` already contains files, the script will stop to avoid appending duplicate rows. Make sure to empty the folder before running the notebook.
 
@@ -498,8 +498,8 @@ The conversion notebook is modular, so you can re-run specific cells for convert
 
 After extracting the complete topic-based works dataset, we generate two additional utility tables:
 
-- `work2topic`: A simplified version of the works table, storing the top-3 topic classifications for each work (`~/notebooks/8_gen_work2topic.ipynb`).
-- `work2year`: A simplified version of the works table, storing the year of publication and number of authors per work (`~/notebooks/9_gen_work2year.ipynb`).
+- `work2topic`: A simplified version of the works table, storing the top-3 topic classifications for each work (`~/notebooks/08_gen_work2topic.ipynb`).
+- `work2year`: A simplified version of the works table, storing the year of publication and number of authors per work (`~/notebooks/09_gen_work2year.ipynb`).
 
 These outputs are stored as individual `.parquet` files per topic in the folders:
 
