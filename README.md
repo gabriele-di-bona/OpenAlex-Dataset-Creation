@@ -138,7 +138,7 @@ This processing is handled in `~/notebooks/02_create_topic_works.ipynb`.
 
 > ⚠️ **Important**: This notebook appends data. If the folder `~/data/works_by_topic_csv/` is not empty, execution will stop to avoid appending duplicate data. Make sure the folder is empty before running.
 
-Once completed, the related section in `~/notebooks/aux_convert_csv2parquet.ipynb` can be executed to convert the generated `*.csv` files into compressed and sorted `*.parquet` files (sorted by date and work id), saved under `~/data/works_by_topic_parquet/`. After this conversion, the intermediate `*.csv` files in `~/data/works_by_topic_csv/` can be safely deleted.
+Once completed, the related section in `~/notebooks/aux_convert_csv2parquet.ipynb` can be executed to convert the generated `*.csv` files into compressed and sorted `*.parquet` files (sorted by date and work id), saved under `~/data/works_by_topic_parquet/`. The same notebook can then enrich those parquet files in place with computed `cited_by_count_computed` and `references_count_computed` columns while preserving the original metadata columns, including `awards`. After this conversion, the intermediate `*.csv` files in `~/data/works_by_topic_csv/` can be safely deleted.
 
 
 
@@ -148,7 +148,8 @@ Each topic-specific table includes the following columns:
 
 ```
 ['id', 'doi', 'mag', 'pmid', 'date', 'type', 'language', 'journal', 'authors', 'topics', 'references',
-'sdg', 'keywords', 'awards', 'primary_topic', 'related_works']
+'sdg', 'keywords', 'awards', 'primary_topic', 'related_works', 'cited_by_count_computed',
+'references_count_computed']
 ```
 
 - **`id`**: A unique OpenAlex identifier (e.g., `W123456`) for the work.
@@ -173,6 +174,8 @@ Each topic-specific table includes the following columns:
   `awardid_funderid;...`.
 - **`primary_topic`**: The main topic ID associated with the work.
 - **`related_works`**: A semicolon-separated list of OpenAlex work IDs related to the work.
+- **`cited_by_count_computed`**: Citation count recomputed from `data/works2citations_by_topic_parquet/` for the same work ID.
+- **`references_count_computed`**: Reference count recomputed from `data/works2references_by_topic_parquet/` for the same work ID.
 
 #### CSV generation logic
 
@@ -473,7 +476,7 @@ def convert_csv2parquet(csv_file_path, parquet_file_path, sort_by=["date", "id"]
 ```
 
 This approach is used consistently across all file types. For example:
-- Works (by topic) files are sorted and saved by topic ID into `~/data/works_by_topic_parquet/`.
+- Works (by topic) files are sorted and saved by topic ID into `~/data/works_by_topic_parquet/`, then optionally enriched in place with computed citation and reference counts.
 - Author and institution tables are similarly converted into a unique file, but sorted with other columns since date here is not relevant.
 
 The conversion notebook is modular, so you can re-run specific cells for converting individual folders if needed.
@@ -849,8 +852,7 @@ Note: only selected folders retain both `.csv` and `.parquet` formats.
 | 757G    | `openalex-snapshot/`                    | Original JSON files (new-schema data)              |
 | 167G    | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic           |
 | 69G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)          |
-| 60G     | `works_by_topic_parquet2/`              | Alternate works parquet copy                       |
-| 51G     | `works_by_topic_parquet/`               | All works per primary topic (parquet)              |
+| 51G     | `works_by_topic_parquet/`               | All works per primary topic (parquet, enriched with computed counts) |
 | 42G     | `author2work_by_topic_csv/`             | Raw author-to-work mapping (CSV)                   |
 | 21G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)           |
 | 18G     | `works2references_by_topic_parquet/`    | Exploded work-to-reference links (parquet)         |
