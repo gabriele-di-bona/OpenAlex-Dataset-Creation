@@ -113,7 +113,11 @@ After downloading the snapshot:
 
 4. After conversion, original `.csv` files **can be deleted**
 
-5. Generate further tables running the numbered notebooks Run the numbered notebooks `~/notebooks/X_gen_SOMETHING.ipynb`
+5. Generate further tables by running the numbered generation notebooks:
+
+   ```
+   ~/notebooks/X_gen_SOMETHING.ipynb
+   ```
 
 ## Notes
 
@@ -813,8 +817,68 @@ Each row in the output parquet files contains:
 
 ---
 
+### Generate Work-SDG Table
+This notebook (`~/notebooks/15_gen_work2sdg.ipynb`) generates per-topic work-to-SDG tables from the main `works_by_topic_parquet` dataset.
+
+The output is stored in:
+
+```
+data/works2sdg_by_topic_parquet/
+```
+
+Each file is a `.parquet` file per topic and keeps the work identifier, date, and exploded SDG assignments with scores.
+
+#### Output structure
+
+The generated tables contain:
+
+- `id`: Work ID
+- `date`: Publication date
+- `sdg_id`: Sustainable Development Goal identifier
+- `score`: OpenAlex SDG score for that work-goal pair
+
+The notebook also produces score-distribution figures in `figures/` for quick inspection of SDG score values:
+
+- `figures/all_sdg_scores_hist.png`
+- `figures/all_sdg_scores_hist.pdf`
+
+Current disk usage in `data/`:
+
+- `data/works2sdg_by_topic_parquet/`: `1.8G`
+
+### Generate Work-Keyword Table
+This notebook (`~/notebooks/16_gen_work2keywords-checkpoint.ipynb`) generates per-topic work-to-keyword tables from the main `works_by_topic_parquet` dataset.
+
+The output is stored in:
+
+```
+data/works2keyword_by_topic_parquet/
+```
+
+Each file is a `.parquet` file per topic and keeps the work identifier, date, and exploded keyword assignments with scores.
+
+#### Output structure
+
+The generated tables contain:
+
+- `id`: Work ID
+- `date`: Publication date
+- `keyword_id`: Keyword identifier
+- `score`: OpenAlex keyword score for that work-keyword pair
+
+The notebook also produces score-distribution figures in `figures/` for quick inspection of keyword score values:
+
+- `figures/all_keyword_scores_hist.png`
+- `figures/all_keyword_scores_hist.pdf`
+
+Current disk usage in `data/`:
+
+- `data/works2keyword_by_topic_parquet/`: `21G`
+
+---
+
 ### Build AI Subfield Dataset
-This notebook (`~/notebooks/15_build_ai_database_and_simplicial_complex.ipynb`) filters the dataset to retain only papers within the **Artificial Intelligence** subfield (based on the OpenAlex topics table).
+The AI-specific workflow currently lives in the temporary notebook `~/notebooks/TMP_01_build_ai_database_and_simplicial_complex.ipynb`. It filters the dataset to retain only papers within the **Artificial Intelligence** subfield (based on the OpenAlex topics table).
 
 The output is stored in:
 
@@ -852,8 +916,9 @@ Note: only selected folders retain both `.csv` and `.parquet` formats.
 | 757G    | `openalex-snapshot/`                    | Original JSON files (new-schema data)              |
 | 167G    | `works_by_topic_csv/`                   | Raw `.csv` version of all works by topic           |
 | 69G     | `works2text_by_topic_parquet/`          | Title + abstract info per topic (parquet)          |
-| 51G     | `works_by_topic_parquet/`               | All works per primary topic (parquet, enriched with computed counts) |
+| 85G     | `works_by_topic_parquet/`               | All works per primary topic (parquet, enriched with computed counts) |
 | 42G     | `author2work_by_topic_csv/`             | Raw author-to-work mapping (CSV)                   |
+| 21G     | `works2keyword_by_topic_parquet/`       | Exploded work-to-keyword scores per topic          |
 | 21G     | `works2citations_by_topic_parquet/`     | Final citation edges (by topic, parquet)           |
 | 18G     | `works2references_by_topic_parquet/`    | Exploded work-to-reference links (parquet)         |
 | 9.3G    | `author2work_by_topic_parquet/`         | Author-to-work mapping per topic (parquet)         |
@@ -861,6 +926,7 @@ Note: only selected folders retain both `.csv` and `.parquet` formats.
 | 3.8G    | `works2topic_by_topic_parquet/`         | All topic assignments per work                     |
 | 2.8G    | `ai_database/`                          | AI subfield outputs                                |
 | 2.0G    | `works2year_by_topic_parquet/`          | Work counts per year and topic                     |
+| 1.8G    | `works2sdg_by_topic_parquet/`           | Exploded work-to-SDG scores per topic              |
 | 1.6G    | `all_works2primary_topic_parquet/`      | Flat table mapping each work to its primary topic  |
 | 1.4G    | `awards/`                               | Awards table (parquet)                             |
 | 24M     | `sources/`                              | Sources table (parquet)                            |
